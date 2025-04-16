@@ -1,3 +1,5 @@
+from sklearn.linear_model import LinearRegression
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
@@ -36,7 +38,8 @@ for df, product_name in dfs:
     y = df['Sales']
 
     # Train Random Forest model
-    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    # model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model = LinearRegression()
     model.fit(X, y)
 
     # Calculate R² score
@@ -51,9 +54,9 @@ for df, product_name in dfs:
 
     # Print model details
     print(f"\nModel for {product_name}:")
-    print(
-        f"Feature Importances: Year = {model.feature_importances_[0]:.4f}, Month = {model.feature_importances_[1]:.4f}")
-    print(f"R² Score: {r2_score:.4f}")
+    # print(
+    #     f"Feature Importances: Year = {model.feature_importances_[0]:.4f}, Month = {model.feature_importances_[1]:.4f}")
+    # print(f"R² Score: {r2_score:.4f}")
     print(f"Model saved as: {model_filename}")
 
 

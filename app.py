@@ -4,6 +4,10 @@ import joblib
 from pymongo import MongoClient
 from fpdf import FPDF
 import time
+import traceback
+import sys
+
+
 
 # Sales Data Calculations
 electronic_sales = pd.read_csv('datasets/electronics_sales_updated.csv')
@@ -61,8 +65,8 @@ if "logged_in" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state.page = "login"
 if "dashboard_page" not in st.session_state:
-    st.session_state.dashboard_page = "overview"  # Default to Dashboard Overview
-if "employees" not in st.session_state:  # Initialize employees in session state
+    st.session_state.dashboard_page = "overview"
+if "employees" not in st.session_state:
     st.session_state.employees = pd.read_csv('datasets/employee_dataset.csv')
 
 # Function to generate PDF bill
@@ -70,12 +74,12 @@ def generate_bill_pdf(customer_name, product, quantity, price_per_unit, total_co
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="SYS MART", ln=1, align='C')  # Header
+    pdf.cell(200, 10, txt="SYS MART", ln=1, align='C')
     pdf.cell(200, 10, txt=f"Customer: {customer_name}", ln=1, align='L')
     pdf.cell(200, 10, txt=f"Product: {product}", ln=1, align='L')
     pdf.cell(200, 10, txt=f"Quantity: {quantity}", ln=1, align='L')
-    pdf.cell(200, 10, txt=f"Price per Unit: ₹{price_per_unit:,}", ln=1, align='L')
-    pdf.cell(200, 10, txt=f"Total Cost: ₹{total_cost:,}", ln=1, align='L')
+    pdf.cell(200, 10, txt=f"Price per Unit: Rs. {price_per_unit:,}", ln=1, align='L')
+    pdf.cell(200, 10, txt=f"Total Cost: Rs. {total_cost:,}", ln=1, align='L')
     return pdf.output(dest='S').encode('latin1')
 
 # Home Dashboard
@@ -105,7 +109,7 @@ def show_home():
         .side-panel {
             width: 250px;
             background-color: #1a1a1a;
-            padding: 0 20px; /* Adjusted padding to remove top space */
+            padding: 0 20px;
             color: white;
             box-shadow: 2px 0 5px rgba(0,0,0,0.5);
             display: flex;
@@ -156,7 +160,7 @@ def show_home():
             padding: 15px;
             border-radius: 10px;
             min-width: 200px;
-            height: auto; /* Adjusted to fit dynamic content */
+            height: auto;
             min-height: 200px;
             display: flex;
             flex-direction: column;
@@ -173,7 +177,7 @@ def show_home():
             overflow: hidden;
         }
         .stock-card .stock-list li {
-            margin: 5px 0; /* Reduced margin to fit all items */
+            margin: 5px 0;
         }
         h2 {
             text-align: center;
@@ -188,7 +192,7 @@ def show_home():
         unsafe_allow_html=True
     )
 
-    # Navigation Buttons in the Side Panel (using Streamlit buttons)
+    # Navigation Buttons in the Side Panel
     with st.sidebar:
         st.markdown("<div class='side-panel'>", unsafe_allow_html=True)
         st.markdown("<h3 style='color:white; font-size: 1.2rem; margin: 0;'>SYS MART</h3>", unsafe_allow_html=True)
@@ -216,7 +220,7 @@ def show_home():
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # Dashboard Content based on selected page
+    # Dashboard Content
     if st.session_state.dashboard_page == "overview":
         html_content = f"""
             <div class='main-content'>
@@ -275,19 +279,16 @@ def show_home():
         """
         st.markdown(html_content, unsafe_allow_html=True)
 
-        # Add Stock Form using Streamlit
         with st.form(key="add_stock_form"):
             item = st.selectbox("Select Item", ["Laptops", "Tablets", "Mobiles", "Smartwatches", "Headphones"])
             quantity = st.number_input("Enter Quantity to Add", min_value=1, step=1, value=1)
             submit_button = st.form_submit_button(label="Add Stock")
 
-        # Handle form submission
         if submit_button:
             stock_index = stock[stock['item'] == item].index
             if not stock_index.empty:
                 stock.loc[stock_index, 'stock'] += quantity
                 stock.to_csv('datasets/item_stock_dataset.csv', index=False)
-                # Update local variables
                 globals()[f"{item.lower()}_stock"] = stock.loc[stock['item'] == item, 'stock'].values[0]
                 st.success(f"✅ Successfully added {quantity} units to {item} stock.")
             else:
@@ -295,7 +296,6 @@ def show_home():
             st.rerun()
 
     elif st.session_state.dashboard_page == "future_trends":
-        # HTML content for the page
         html_content = f"""
             <div class='main-content'>
                 <h2>🛍️ Future Trends</h2>
@@ -308,38 +308,39 @@ def show_home():
         """
         st.markdown(html_content, unsafe_allow_html=True)
 
-        # User input for prediction
         with st.form(key="future_trends_form"):
             product = st.selectbox("Select Product", ["Headphones", "Laptops", "Smartphones", "Smartwatches", "Tablets"])
             month = st.number_input("Enter Month (1-12)", min_value=1, max_value=12, value=1)
             year = st.number_input("Enter Year", min_value=2025, max_value=2030, value=2025)
             predict_button = st.form_submit_button(label="Predict")
 
-        # Store product and month in variables
         selected_product = product
         selected_month = month
 
-        # Load the appropriate model and predict on button click
         if predict_button:
             model_path = f"models/sales/{selected_product.lower()}_model.joblib"
             try:
                 model = joblib.load(model_path)
                 # Prepare input data with all expected features (value, Year, Month)
-                input_data = pd.DataFrame([[0, year, month]], columns=["value", "Year", "Month"])
-                # Make prediction
+                # input_data = pd.DataFrame([[0, year, month]], columns=["value", "Year", "Month"])
+                input_data = pd.DataFrame({'Year': [year], 'Month': [month]})
                 prediction = model.predict(input_data)[0]
-                # Display prediction in styled HTML
                 prediction_html = f"""
                     <div class='stock-container'>
                         <div class='stock-card'>
                             <h3>Prediction Result</h3>
-                            <p>Predicted sales for {selected_product} in {selected_month}/{year}: {prediction:.2f} units</p>
+                            <p>Predicted sales for {selected_product} in {selected_month}/{year}: {int(prediction)} units</p>
                         </div>
                     </div>
                 """
                 st.markdown(prediction_html, unsafe_allow_html=True)
             except Exception as e:
-                # Silent fail with default message in styled box
+                print("Error type:", type(e).__name__)
+                print("Error message:", e)
+                tb = sys.exc_info()[2]
+                print("Line number:", tb.tb_lineno)
+                print("Full traceback:")
+                traceback.print_exc()
                 prediction_html = f"""
                     <div class='stock-container'>
                         <div class='stock-card'>
@@ -350,68 +351,97 @@ def show_home():
                 """
                 st.markdown(prediction_html, unsafe_allow_html=True)
 
+
     elif st.session_state.dashboard_page == "employees":
-        # Use employees from session state
+
         employees = st.session_state.employees.copy()
 
-        # HTML content for the page
         html_content = f"""
+
             <div class='main-content'>
+
                 <h2>👥 Employees</h2>
+
                 <div class='stock-container'>
+
                     <div class='stock-card'>
+
                         <h3>Current Employees</h3>
+
                     </div>
+
                 </div>
+
             </div>
+
         """
+
         st.markdown(html_content, unsafe_allow_html=True)
 
-        # Display current employees in a table with index starting from 1
         employees_with_index = employees.reset_index(drop=True)
+
         employees_with_index.index = employees_with_index.index + 1
+
         st.table(employees_with_index)
 
-        # Remove Employee Form
         with st.form(key="remove_employee_form"):
+
             remove_name = st.selectbox("Select Employee to Remove", [''] + employees['Name'].tolist(), index=0)
+
             remove_button = st.form_submit_button(label="Remove Employee")
 
         if remove_button and remove_name:
             employees = employees[employees['Name'] != remove_name]
+
             employees.to_csv('datasets/employee_dataset.csv', index=False)
-            st.session_state.employees = employees  # Update session state
+
+            st.session_state.employees = employees
+
             st.success(f"✅ Removed {remove_name} from employees.")
+
             st.rerun()
 
-        # Add Employee Form
         with st.form(key="add_employee_form"):
+
             name = st.text_input("Name")
+
             email = st.text_input("Email ID")
+
             years_exp = st.number_input("Years of Experience", min_value=0, step=1, value=0)
+
             education = st.selectbox("Education Level", ["High School", "Bachelor's", "Master's", "PhD"])
+
             skill_score = st.number_input("Skill Score (0-100)", min_value=0, max_value=100, step=1, value=50)
-            certifications = st.text_input("Certifications (comma-separated)", value="0")  # Default to "0" if empty
+
+            certifications = st.text_input("Certifications (comma-separated)", value="0")
+
             add_button = st.form_submit_button(label="Add Candidate")
 
         if add_button and name and email:
-            # Convert certifications to a numeric value (handle comma-separated input)
-            certs = certifications.split(",")[0].strip() if certifications else "0"  # Take first value if multiple
-            try:
-                certs_numeric = int(certs)  # Convert to integer
-            except ValueError:
-                certs_numeric = 0  # Default to 0 if conversion fails
 
-            # Prepare input data for prediction with all expected columns
+            certs = certifications.split(",")[0].strip() if certifications else "0"
+
+            try:
+
+                certs_numeric = int(certs)
+
+            except ValueError:
+
+                certs_numeric = 0
+
             input_data = pd.DataFrame([[years_exp, education, skill_score, certs_numeric]],
-                                    columns=["YearsExperience", "EducationLevel", "SkillScore", "Certifications"])
+
+                                      columns=["YearsExperience", "EducationLevel", "SkillScore", "Certifications"])
+
             try:
                 model = joblib.load("models/employeehire/hire_model.joblib")
+
                 prediction = model.predict(input_data)[0]
+
                 st.write(f"Predicted Hire Score: {prediction:.2f}")
 
-                # Accept or Reject Candidate
                 if st.button("Accept Candidate"):
+                    print("Accepted Candidate trigger")
                     new_employee = pd.DataFrame({
                         "Name": [name],
                         "EmailID": [email],
@@ -420,18 +450,37 @@ def show_home():
                         "SkillScore": [skill_score],
                         "Certifications": [certs_numeric]
                     })
+                    # Debug: Print new_employee to verify data
+                    print("New employee data:", new_employee.to_string())
+                    # Concatenate and update employees
                     employees = pd.concat([employees, new_employee], ignore_index=True)
-                    employees.to_csv('datasets/employee_dataset.csv', index=False)
-                    st.session_state.employees = employees  # Update session state
-                    st.success(f"✅ Added {name} to employees. File updated.")
+                    # Debug: Print updated employees to verify concatenation
+                    print("Updated employees:", employees.to_string())
+                    # Save to CSV with explicit encoding to avoid issues
+                    employees.to_csv('datasets/employee_dataset.csv', index=True)
+                    # Verify file write
+                    try:
+                        loaded_employees = pd.read_csv('datasets/employee_dataset.csv')
+                        print("Loaded from CSV:", loaded_employees.to_string())
+                        if name in loaded_employees['Name'].values:
+                            st.session_state.employees = employees
+                            st.success(f"✅ Added {name} to employees. File updated.")
+                        else:
+                            st.error("Failed to verify employee in CSV after save.")
+                    except Exception as e:
+
+                        st.error(f"Error verifying CSV write: {str(e)}")
+
                     st.rerun()
+
                 if st.button("Reject Candidate"):
                     st.write("Candidate rejected. Displaying current employees.")
+
             except Exception as e:
+
                 st.error(f"Error loading model or predicting: {str(e)}")
 
     elif st.session_state.dashboard_page == "generate_bill":
-        # HTML content for the page
         html_content = f"""
             <div class='main-content'>
                 <h2>🧾 Generate Bill</h2>
@@ -444,16 +493,13 @@ def show_home():
         """
         st.markdown(html_content, unsafe_allow_html=True)
 
-        # Bill Generation Form
         with st.form(key="generate_bill_form"):
             customer_name = st.text_input("Customer Name")
             product = st.selectbox("Select Product", ["Smartphones", "Laptops", "Tablets", "Headphones", "Smartwatches"])
             quantity = st.number_input("Quantity", min_value=1, step=1, value=1)
             generate_button = st.form_submit_button(label="Generate Bill")
 
-        # Generate Bill on button click
         if generate_button:
-            # Determine price based on product
             price_per_unit = {
                 "Smartphones": smartphone_cost,
                 "Laptops": laptop_cost,
@@ -463,7 +509,6 @@ def show_home():
             }.get(product, 0)
             total_cost = price_per_unit * quantity
 
-            # Generate bill content
             bill_html = f"""
                 <div class='stock-container'>
                     <div class='stock-card'>
@@ -479,7 +524,6 @@ def show_home():
             """
             st.markdown(bill_html, unsafe_allow_html=True)
 
-            # Generate PDF and provide download button
             pdf_bytes = generate_bill_pdf(customer_name, product, quantity, price_per_unit, total_cost)
             st.download_button(
                 label="Download Bill",
@@ -489,18 +533,86 @@ def show_home():
             )
 
     elif st.session_state.dashboard_page == "vip_customers":
-        html_content = f"""
+        st.markdown(
+            f"""
             <div class='main-content'>
                 <h2>💎 VIP Customers</h2>
                 <div class='stock-container'>
                     <div class='stock-card'>
-                        <h3>VIP Customers</h3>
-                        <p>VIP customer content here.</p>
+                        <h3>Check VIP Status</h3>
                     </div>
                 </div>
             </div>
-        """
-        st.markdown(html_content, unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True
+        )
+
+        with st.form(key="vip_customer_form"):
+            total_spend = st.number_input("Total Spend (₹)", min_value=0.0, step=100.0)
+            purchase_frequency = st.number_input("Purchase Frequency (per month)", min_value=0.0, step=0.1)
+            preferred_product = st.selectbox("Preferred Product", ["Smartphones", "Laptops", "Tablets", "Headphones", "Smartwatches"])
+            submit_button = st.form_submit_button(label="Check VIP Status")
+
+        if submit_button:
+            # Map preferred product to numerical value
+            product_mapping = {
+                "Smartphones": 0,
+                "Laptops": 1,
+                "Tablets": 2,
+                "Headphones": 3,
+                "Smartwatches": 4
+            }
+            preferred_product_encoded = product_mapping.get(preferred_product, -1)
+
+            if preferred_product_encoded == -1:
+                st.error("Invalid preferred product selected.")
+            else:
+                # Prepare input data for the model
+                # input_data = pd.DataFrame(
+                #     [[total_spend, purchase_frequency, preferred_product_encoded]],
+                #     columns=["TotalSpend", "PurchaseFrequency", "PreferredProduct"]
+                # )
+                input_data = pd.DataFrame({
+                    'TotalSpend': [total_spend],
+                    'PurchaseFrequency': [purchase_frequency],
+                    'PreferredProduct': [preferred_product]
+                })
+
+                try:
+                    model = joblib.load("models/customervipcheck/vip_model.joblib")
+                    prediction = model.predict(input_data)[0]
+
+                    # Load existing customer data
+                    customer_data = pd.read_csv('datasets/customer_behavior_vip.csv')
+
+                    # Get the last index and CustomerID
+                    last_index = customer_data.index[-1]  # Use the last index of the DataFrame
+                    last_customer_id = customer_data.iloc[-1]["CustomerID"]
+
+                    # Prepare input_data
+                    input_data["IsVIP"] = prediction
+                    input_data["CustomerID"] = last_customer_id + 1
+                    input_data.index = [last_index + 1]  # Set the index for input_data
+
+                    # Concatenate the data
+                    customer_data = pd.concat([customer_data, input_data])
+
+                    # Save to CSV without the index column
+                    customer_data.to_csv('datasets/customer_behavior_vip.csv', index=False)
+
+                    if prediction == 1:
+                        st.success("This customer should be made a VIP!")
+                    else:
+                        st.info("This customer does not qualify as a VIP.")
+                except Exception as e:
+                    st.error(f"Error in prediction: {str(e)}")
+                    print("Error type:", type(e).__name__)
+                    print("Error message:", e)
+                    tb = sys.exc_info()[2]
+                    print("Line number:", tb.tb_lineno)
+                    print("Full traceback:")
+                    traceback.print_exc()
+
     elif st.session_state.dashboard_page == "settings":
         html_content = f"""
             <div class='main-content'>

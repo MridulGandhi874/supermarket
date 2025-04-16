@@ -9999,3 +9999,5 @@ CustomerID,TotalSpend,PurchaseFrequency,PreferredProduct,IsVIP
 9998,623.99,0.11,Headphones,1
 9999,13453.8,0.89,Smartphones,1
 10000,12420.05,0.85,Smartphones,1
+10001,5000.0,3.0,Smartphones,1
+10002,10000.0,3.0,Smartphones,1
