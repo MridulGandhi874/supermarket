@@ -352,37 +352,60 @@ def show_home():
                 st.markdown(prediction_html, unsafe_allow_html=True)
 
 
+
+
     elif st.session_state.dashboard_page == "employees":
 
         employees = st.session_state.employees.copy()
 
-        html_content = f"""
+        # Render the HTML content using st.markdown with unsafe_allow_html=True
+
+        html_content = """
+            <style>
+                .main-content {
+                    background-color: #1e1e1e;
+                    padding: 20px;
+                    border-radius: 10px;
+                    color: white;
+                }
+                .stock-container {
+                    display: flex;
+                    gap: 20px;
+                    margin-top: 10px;
+                }
+                .stock-card {
+                    background-color: #333;
+                    padding: 15px;
+                    border-radius: 10px;
+                    width: 100%;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+                }
+            </style>
 
             <div class='main-content'>
-
                 <h2>👥 Employees</h2>
-
                 <div class='stock-container'>
-
                     <div class='stock-card'>
-
                         <h3>Current Employees</h3>
-
+                        <p>View and manage employee records below.</p>
                     </div>
-
                 </div>
-
             </div>
-
         """
 
         st.markdown(html_content, unsafe_allow_html=True)
+
+        # Display employee table
 
         employees_with_index = employees.reset_index(drop=True)
 
         employees_with_index.index = employees_with_index.index + 1
 
+        st.markdown("<h3 style='color:white;'>Employee List</h3>", unsafe_allow_html=True)
+
         st.table(employees_with_index)
+
+        # Form to remove an employee
 
         with st.form(key="remove_employee_form"):
 
@@ -400,6 +423,8 @@ def show_home():
             st.success(f"✅ Removed {remove_name} from employees.")
 
             st.rerun()
+
+        # Form to add a new employee
 
         with st.form(key="add_employee_form"):
 
@@ -429,11 +454,16 @@ def show_home():
 
                 certs_numeric = 0
 
-            input_data = pd.DataFrame([[years_exp, education, skill_score, certs_numeric]],
+            input_data = pd.DataFrame(
 
-                                      columns=["YearsExperience", "EducationLevel", "SkillScore", "Certifications"])
+                [[years_exp, education, skill_score, certs_numeric]],
+
+                columns=["YearsExperience", "EducationLevel", "SkillScore", "Certifications"]
+
+            )
 
             try:
+
                 model = joblib.load("models/employeehire/hire_model.joblib")
 
                 prediction = model.predict(input_data)[0]
@@ -441,40 +471,34 @@ def show_home():
                 st.write(f"Predicted Hire Score: {prediction:.2f}")
 
                 if st.button("Accept Candidate"):
-                    print("Accepted Candidate trigger")
                     new_employee = pd.DataFrame({
-                        "Name": [name],
-                        "EmailID": [email],
-                        "YearsExperience": [years_exp],
-                        "EducationLevel": [education],
-                        "SkillScore": [skill_score],
-                        "Certifications": [certs_numeric]
-                    })
-                    # Debug: Print new_employee to verify data
-                    print("New employee data:", new_employee.to_string())
-                    # Concatenate and update employees
-                    employees = pd.concat([employees, new_employee], ignore_index=True)
-                    # Debug: Print updated employees to verify concatenation
-                    print("Updated employees:", employees.to_string())
-                    # Save to CSV with explicit encoding to avoid issues
-                    employees.to_csv('datasets/employee_dataset.csv', index=True)
-                    # Verify file write
-                    try:
-                        loaded_employees = pd.read_csv('datasets/employee_dataset.csv')
-                        print("Loaded from CSV:", loaded_employees.to_string())
-                        if name in loaded_employees['Name'].values:
-                            st.session_state.employees = employees
-                            st.success(f"✅ Added {name} to employees. File updated.")
-                        else:
-                            st.error("Failed to verify employee in CSV after save.")
-                    except Exception as e:
 
-                        st.error(f"Error verifying CSV write: {str(e)}")
+                        "Name": [name],
+
+                        "EmailID": [email],
+
+                        "YearsExperience": [years_exp],
+
+                        "EducationLevel": [education],
+
+                        "SkillScore": [skill_score],
+
+                        "Certifications": [certs_numeric]
+
+                    })
+
+                    employees = pd.concat([employees, new_employee], ignore_index=True)
+
+                    employees.to_csv('datasets/employee_dataset.csv', index=False)
+
+                    st.session_state.employees = employees
+
+                    st.success(f"✅ Added {name} to employees.")
 
                     st.rerun()
 
                 if st.button("Reject Candidate"):
-                    st.write("Candidate rejected. Displaying current employees.")
+                    st.info("Candidate rejected.")
 
             except Exception as e:
 
