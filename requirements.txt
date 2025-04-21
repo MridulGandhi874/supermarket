@@ -3,6 +3,5 @@ pandas
 joblib
 pymongo
 fpdf
-time
 traceback
 sys
