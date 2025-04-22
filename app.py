@@ -215,9 +215,6 @@ def show_home():
         if st.button("💎 VIP Customers", key="btn_vip_customers"):
             st.session_state.dashboard_page = "vip_customers"
             st.rerun()
-        if st.button("⚙️ Settings", key="btn_settings"):
-            st.session_state.dashboard_page = "settings"
-            st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     # Dashboard Content
