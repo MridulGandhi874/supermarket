@@ -351,6 +351,7 @@ def show_home():
 
 
 
+
     elif st.session_state.dashboard_page == "employees":
 
         employees = st.session_state.employees.copy()
@@ -358,36 +359,66 @@ def show_home():
         # Render the HTML content using st.markdown with unsafe_allow_html=True
 
         html_content = """
+
             <style>
+
                 .main-content {
+
                     background-color: #1e1e1e;
+
                     padding: 20px;
+
                     border-radius: 10px;
+
                     color: white;
+
                 }
+
                 .stock-container {
+
                     display: flex;
+
                     gap: 20px;
+
                     margin-top: 10px;
+
                 }
+
                 .stock-card {
+
                     background-color: #333;
+
                     padding: 15px;
+
                     border-radius: 10px;
+
                     width: 100%;
+
                     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+
                 }
+
             </style>
 
+
             <div class='main-content'>
+
                 <h2>👥 Employees</h2>
+
                 <div class='stock-container'>
+
                     <div class='stock-card'>
+
                         <h3>Current Employees</h3>
+
                         <p>View and manage employee records below.</p>
+
                     </div>
+
                 </div>
+
             </div>
+
         """
 
         st.markdown(html_content, unsafe_allow_html=True)
@@ -467,20 +498,55 @@ def show_home():
 
                 st.write(f"Predicted Hire Score: {prediction:.2f}")
 
+                # Store candidate details in session state to use after decision
+
+                st.session_state.candidate = {
+
+                    "name": name,
+
+                    "email": email,
+
+                    "years_exp": years_exp,
+
+                    "education": education,
+
+                    "skill_score": skill_score,
+
+                    "certs_numeric": certs_numeric
+
+                }
+
+
+            except Exception as e:
+
+                st.error(f"Error loading model or predicting: {str(e)}")
+
+        # Handle candidate decision outside the form
+
+        if "candidate" in st.session_state:
+
+            st.markdown("### Candidate Decision")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+
                 if st.button("Accept Candidate"):
+                    candidate = st.session_state.candidate
+
                     new_employee = pd.DataFrame({
 
-                        "Name": [name],
+                        "Name": [candidate["name"]],
 
-                        "EmailID": [email],
+                        "EmailID": [candidate["email"]],
 
-                        "YearsExperience": [years_exp],
+                        "YearsExperience": [candidate["years_exp"]],
 
-                        "EducationLevel": [education],
+                        "EducationLevel": [candidate["education"]],
 
-                        "SkillScore": [skill_score],
+                        "SkillScore": [candidate["skill_score"]],
 
-                        "Certifications": [certs_numeric]
+                        "Certifications": [candidate["certs_numeric"]]
 
                     })
 
@@ -490,16 +556,18 @@ def show_home():
 
                     st.session_state.employees = employees
 
-                    st.success(f"✅ Added {name} to employees.")
+                    st.success(f"✅ Added {candidate['name']} to employees.")
+
+                    del st.session_state.candidate  # Clear candidate data
 
                     st.rerun()
+
+            with col2:
 
                 if st.button("Reject Candidate"):
                     st.info("Candidate rejected.")
 
-            except Exception as e:
-
-                st.error(f"Error loading model or predicting: {str(e)}")
+                    del st.session_state.candidate  # Clear candidate data
 
     elif st.session_state.dashboard_page == "generate_bill":
         html_content = f"""
