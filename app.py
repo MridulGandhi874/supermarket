@@ -400,25 +400,6 @@ def show_home():
 
             </style>
 
-
-            <div class='main-content'>
-
-                <h2>👥 Employees</h2>
-
-                <div class='stock-container'>
-
-                    <div class='stock-card'>
-
-                        <h3>Current Employees</h3>
-
-                        <p>View and manage employee records below.</p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
         """
 
         st.markdown(html_content, unsafe_allow_html=True)
