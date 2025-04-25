@@ -52,17 +52,6 @@ print(f"Model saved as: {model_filename}")
 
 # Step 7: Prediction function
 def predict_vip(total_spend, purchase_frequency, preferred_product):
-    """
-    Predict if a customer should be a VIP based on purchase behavior.
-
-    Parameters:
-    - total_spend (float): Total amount spent (USD)
-    - purchase_frequency (float): Purchases per year
-    - preferred_product (str): Preferred product
-
-    Returns:
-    - Prediction and recommendation (str)
-    """
     # Validate inputs
     if not isinstance(total_spend, (int, float)) or total_spend < 0:
         return f"Error: TotalSpend must be a non-negative number, got {total_spend}"
@@ -103,5 +92,3 @@ print(predict_vip(4000, 2.0, 'Smartphones'))
 print(predict_vip(1000, 0.5, 'Headphones'))
 print(predict_vip(3500, 1.8, 'Laptops'))
 
-# Uncomment to enable interactive input
-# get_user_prediction()

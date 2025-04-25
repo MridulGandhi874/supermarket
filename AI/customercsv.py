@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 
+from AI.customertraining import accuracy
+
 # Settings
 np.random.seed(42)
 products = ['Smartphones', 'Laptops', 'Headphones', 'Tablets', 'Smartwatches']

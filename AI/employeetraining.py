@@ -52,19 +52,7 @@ print(f"Model saved as: {model_filename}")
 
 # Step 7: Prediction function
 def predict_hire(years_experience, education_level, skill_score, certifications):
-    """
-    Predict if a candidate should be hired based on CV details.
 
-    Parameters:
-    - years_experience (int): Years of professional experience
-    - education_level (str): Highest degree (High School, Bachelor’s, Master’s, PhD)
-    - skill_score (float): Skill score (0–100)
-    - certifications (int): Number of certifications
-
-    Returns:
-    - Prediction and recommendation (str)
-    """
-    # Validate inputs
     if not isinstance(years_experience, (int, float)) or years_experience < 0:
         return f"Error: YearsExperience must be a non-negative number, got {years_experience}"
     if education_level not in education_levels:
@@ -109,6 +97,3 @@ print("\nRunning example predictions:")
 print(predict_hire(7, 'Master’s', 85, 2))
 print(predict_hire(1, 'High School', 60, 0))
 print(predict_hire(5, 'Bachelor’s', 75, 1))
-
-# Uncomment to enable interactive input
-# get_user_prediction()

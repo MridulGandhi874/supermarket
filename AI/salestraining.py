@@ -62,18 +62,7 @@ for df, product_name in dfs:
 
 # Step 3: Prediction function
 def predict_sales(month, year, product):
-    """
-    Predict sales for a given month, year, and product.
 
-    Parameters:
-    - month (int): Month number (1-12)
-    - year (int): Year (e.g., 2025)
-    - product (str): Product name (Smartphones, Laptops, Headphones, Tablets, Smartwatches)
-
-    Returns:
-    - Predicted sales (float) or error message (str)
-    """
-    # Validate inputs
     if not isinstance(month, int) or month < 1 or month > 12:
         return f"Error: Month must be an integer between 1 and 12, got {month}"
     if not isinstance(year, int):
@@ -112,6 +101,3 @@ print("\nRunning example predictions:")
 print(f"Smartphones, Jan 2025: {predict_sales(1, 2025, 'Smartphones')} units")
 print(f"Laptops, Dec 2025: {predict_sales(12, 2025, 'Laptops')} units")
 print(f"Headphones, Jun 2024: {predict_sales(6, 2024, 'Headphones')} units")
-
-# Uncomment to enable interactive input
-# get_user_prediction()
